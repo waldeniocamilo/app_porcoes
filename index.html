@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portion Audit - Controlo e Gestão</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js para o Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; } /* Fundo claro executivo */
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+  <!-- CABEÇALHO (Azul Marinho / Slate 900) -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight">Portion Audit</h1>
+          <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Dashboard Executivo de Operações</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="status-conexao" class="flex items-center gap-1 px-3 py-1 bg-amber-500/15 text-amber-400 rounded-full border border-amber-500/20 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          A aguardar sincronização
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ABAS DE NAVEGAÇÃO -->
+  <nav id="nav-tabs" class="bg-white border-b border-slate-200 px-6 shadow-sm">
+    <div class="max-w-7xl mx-auto flex overflow-x-auto gap-1">
+      <button onclick="switchTab('counting')" id="btn-tab-counting" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 bg-blue-50/10 flex items-center gap-2 transition-all">
+        Nova Contagem
+      </button>
+      <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all">
+        Dashboard
+      </button>
+      <button onclick="switchTab('report')" id="btn-tab-report" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all">
+        Relatório Diferenças
+      </button>
+    </div>
+  </nav>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8">
+
+    <!-- TELA 1: IDENTIFICAÇÃO -->
+    <div id="view-counting-step1" class="tab-view space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm max-w-xl mx-auto">
+        <div class="text-center mb-8">
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 mb-3">Etapa 1 de 2</span>
+          <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Identificação da Contagem</h2>
+          <p class="text-slate-500 text-sm mt-1">Insira as credenciais operacionais para iniciar</p>
+        </div>
+
+        <form onsubmit="handleNextStep(event)" class="space-y-6">
+          <div class="relative">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Responsável pela Contagem</label>
+            <input type="text" id="input-quemContou" placeholder="Digite o seu nome..." autocomplete="off" oninput="filterNameSuggestions(this.value)" onfocus="showNamesDropdown()" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            <div id="names-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Local da Contagem</label>
+            <select id="select-local" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer transition-all">
+              <option value="" disabled selected>Selecione o local...</option>
+              <option value="Marenostrum">Marenostrum</option>
+              <option value="Room Service">Room Service</option>
+              <option value="Jangada">Jangada</option>
+              <option value="Jangada Noite">Jangada Noite</option>
+              <option value="Petiscaria">Petiscaria</option>
+              <option value="Tapiro Grill">Tapiro Grill</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Contagem</label>
+            <div class="grid grid-cols-2 gap-4">
+              <button type="button" id="btn-tipo-inicial" onclick="setTipo('inicial')" class="py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-2 ring-blue-500/10">
+                <span class="font-semibold text-sm">Contagem Inicial</span>
+                <span class="text-[10px] opacity-80 font-normal">Abertura de turno</span>
+              </button>
+              <button type="button" id="btn-tipo-final" onclick="setTipo('final')" class="py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                <span class="font-semibold text-sm">Contagem Final</span>
+                <span class="text-[10px] opacity-80 font-normal">Fecho de caixa</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full mt-4 py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2">
+            Começar Contagem
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TELA 2: FLUXO DE ITENS -->
+    <div id="view-counting-step2" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 text-white rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md">
+        <div class="flex items-center gap-3">
+          <button onclick="backToStep1()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors">&larr; Voltar</button>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="display-local" class="font-semibold text-base leading-none">-</h3>
+              <span id="display-tipo" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/20 text-blue-300">-</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Responsável: <strong id="display-responsavel" class="text-slate-200">-</strong></p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Acumulado</span>
+          <p id="display-total-acumulado" class="text-xl font-bold text-emerald-400">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Adicionar Produto</h3>
+        <form onsubmit="handleAddItem(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          <div class="md:col-span-3 relative">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cód. Produto</label>
+            <input type="text" id="input-cod" placeholder="Pesquisar código..." autocomplete="off" oninput="filterCodSuggestions(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            <div id="cod-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto font-mono text-xs"></div>
+          </div>
+
+          <div class="md:col-span-4 relative">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Produto</label>
+            <input type="text" id="input-item" placeholder="Pesquisar produto..." autocomplete="off" oninput="filterItemSuggestions(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            <div id="item-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto text-xs"></div>
+          </div>
+
+          <div class="md:col-span-1">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Uni</label>
+            <div id="display-unidade" class="w-full px-2 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-sm font-semibold text-slate-700 min-h-[44px] flex items-center justify-center">-</div>
+          </div>
+
+          <div class="md:col-span-1">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Custo</label>
+            <div id="display-custo" class="w-full px-1 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-mono text-slate-700 min-h-[44px] flex items-center justify-center">-</div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Qtd. Contada</label>
+            <input type="text" id="input-quantidade" placeholder="0,00" oninput="validateCommaNumber(this)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+          </div>
+
+          <div class="md:col-span-1">
+            <button type="submit" class="w-full p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-sm flex items-center justify-center min-h-[44px] text-lg font-bold">+</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Itens Incluídos</h3>
+          <button onclick="clearAddedItems()" class="text-xs text-rose-500 font-semibold hover:underline">Limpar Tudo</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-white border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                <th class="px-6 py-3 font-mono">Cód</th>
+                <th class="px-6 py-3">Produto</th>
+                <th class="px-6 py-3 text-center">Und</th>
+                <th class="px-6 py-3 text-right">Qtd. Contada</th>
+                <th class="px-6 py-3 text-right">Custo Unit</th>
+                <th class="px-6 py-3 text-right">Custo Total</th>
+                <th class="px-6 py-3 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="table-added-items" class="divide-y divide-slate-100 text-sm bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-2">
+        <button onclick="backToStep1()" class="px-5 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-medium transition-all">Voltar Identificação</button>
+        <button onclick="finalizeCountToPDV()" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center gap-2">Finalizar e Abrir PDV</button>
+      </div>
+    </div>
+
+    <!-- TELA DO TICKET PDV -->
+    <div id="view-counting-pdv" class="tab-view hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div class="md:col-span-6 flex justify-center">
+          <div class="bg-white text-slate-950 p-6 rounded-2xl shadow-xl border border-slate-200 font-mono text-[12px] leading-relaxed w-full max-w-[340px]" id="pdv-ticket">
+            <div class="text-center">
+              <h2 class="text-sm font-bold tracking-widest">CONTROLO DE PORÇÕES</h2>
+              <p class="text-[10px] text-slate-500 mt-0.5">SISTEMA DE AUDITORIA DE ESTOQUE</p>
+              <div class="border-t-2 border-double border-slate-300 my-3"></div>
+            </div>
+
+            <div class="space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span>DATA/HORA:</span><span id="ticket-data" class="font-bold">-</span></div>
+              <div class="flex justify-between"><span>OPERADOR:</span><span id="ticket-responsavel" class="font-bold uppercase">-</span></div>
+              <div class="flex justify-between"><span>LOCAL:</span><span id="ticket-local" class="font-bold uppercase">-</span></div>
+              <div class="flex justify-between"><span>TIPO:</span><span id="ticket-tipo" class="font-bold uppercase">-</span></div>
+            </div>
+
+            <div class="border-t border-dashed border-slate-300 my-4"></div>
+            <table class="w-full text-[11px]">
+              <thead>
+                <tr class="font-bold text-slate-800 border-b border-slate-200">
+                  <th class="py-1 text-left">CÓD/ITEM</th>
+                  <th class="py-1 text-center">UNI</th>
+                  <th class="py-1 text-right">QTD</th>
+                  <th class="py-1 text-right">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="ticket-items-body"></tbody>
+            </table>
+
+            <div class="border-t border-dashed border-slate-300 my-4"></div>
+            <div class="space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span>TOTAL DE ITENS:</span><span id="ticket-total-itens">-</span></div>
+              <div class="flex justify-between"><span>SOMA PORÇÕES:</span><span id="ticket-soma-qte">-</span></div>
+              <div class="border-t border-double border-slate-300 my-2"></div>
+              <div class="flex justify-between text-xs font-bold">
+                <span>VALOR ESTOQUE:</span>
+                <span id="ticket-valor-total">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-6 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-semibold text-slate-900">Ações de Encerramento</h3>
+            <p class="text-xs text-slate-500">Guarde as informações na sua base de dados do Google Sheets e imprima o comprovativo.</p>
+            
+            <button onclick="saveSessionToSheets()" id="btn-save-sheets" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md transition-all">Salvar no Google Sheets</button>
+            <button onclick="printPdvTicket()" class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Imprimir Comprovativo</button>
+            <button onclick="resetToHome()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-sm font-semibold transition-all">Voltar ao Início</button>
+          </div>
+
+          <div id="save-status-box" class="hidden rounded-2xl border p-5 flex items-start gap-3 bg-emerald-50 border-emerald-200 text-emerald-900">
+            <div>
+              <h4 class="font-bold text-sm">Status da Sincronização</h4>
+              <p id="save-status-msg" class="text-xs text-slate-600 mt-1"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA: DASHBOARD -->
+    <div id="view-dashboard" class="tab-view hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-semibold text-slate-900">Painel de Métricas e Análises</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Visão geral financeira do stock de porções</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold text-slate-500">Filtrar Local:</label>
+          <select id="dash-select-local" onchange="renderDashboard()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white">
+            <option value="Todos">Todos os Locais</option>
+            <option value="Marenostrum">Marenostrum</option>
+            <option value="Room Service">Room Service</option>
+            <option value="Jangada">Jangada</option>
+            <option value="Jangada Noite">Jangada Noite</option>
+            <option value="Petiscaria">Petiscaria</option>
+            <option value="Tapiro Grill">Tapiro Grill</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="p-3 bg-blue-50 text-blue-600 rounded-xl font-bold">📄</div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Histórico</span>
+            <h4 id="dash-kpi-sessoes" class="text-2xl font-bold text-slate-900 mt-0.5">0</h4>
+            <p class="text-[10px] text-slate-500">Contagens salvas</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold">💰</div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Último Fecho</span>
+            <h4 id="dash-kpi-ultimo" class="text-2xl font-bold text-slate-900 mt-0.5">R$ 0,00</h4>
+            <p class="text-[10px] text-slate-500">Auditoria mais recente</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="p-3 bg-amber-50 text-amber-600 rounded-xl font-bold">📦</div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Investimento Médio</span>
+            <h4 id="dash-kpi-media" class="text-2xl font-bold text-slate-900 mt-0.5">R$ 0,00</h4>
+            <p class="text-[10px] text-slate-500">Insumo médio por lote</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Evolução do Stock</h4>
+            <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200">
+              <button onclick="setDashChartType('inicial')" id="dash-btn-inicial" class="px-3 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition-all">Inicial</button>
+              <button onclick="setDashChartType('final')" id="dash-btn-final" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">Final</button>
+            </div>
+          </div>
+          <div class="h-64 md:h-80 relative flex items-center justify-center">
+            <canvas id="chart-linha"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col">
+          <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-1">Distribuição por Setor</h4>
+          <p class="text-xs text-slate-500 mb-6">Valores investidos por local</p>
+          <div class="h-60 relative flex items-center justify-center">
+            <canvas id="chart-rosca"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-12 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6">Insumos de Maior Peso Financeiro (Top 8)</h4>
+          <div class="h-64 md:h-80 relative flex items-center justify-center">
+            <canvas id="chart-barras"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELA: RELATÓRIO DE DIFERENÇAS -->
+    <div id="view-report" class="tab-view hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Filtro Customizável para Comparação de Porções</h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">1. Data (A)</label>
+            <input type="date" id="report-date-a" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">2. Tipo (A)</label>
+            <select id="report-type-a" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white cursor-pointer font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              <option value="inicial" selected>Inicial</option>
+              <option value="final">Final</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">3. Setor / PDV</label>
+            <select id="report-local" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white cursor-pointer font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              <option value="Marenostrum">Marenostrum</option>
+              <option value="Room Service">Room Service</option>
+              <option value="Jangada">Jangada</option>
+              <option value="Jangada Noite">Jangada Noite</option>
+              <option value="Petiscaria">Petiscaria</option>
+              <option value="Tapiro Grill">Tapiro Grill</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">4. Data (B)</label>
+            <input type="date" id="report-date-b" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">5. Tipo (B)</label>
+            <select id="report-type-b" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white cursor-pointer font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              <option value="inicial">Inicial</option>
+              <option value="final" selected>Final</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <button onclick="generateDifferenceReport()" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors min-h-[44px]">
+              Filtrar e Calcular
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="report-results-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hidden">
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Demonstrativo de Consumo</h3>
+          <span id="label-formula-dinamica" class="text-[10px] text-slate-500 bg-white border border-slate-300 px-2 py-1 rounded">Diferença = B - A</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-white border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                <th class="px-6 py-3 font-mono">Cód</th>
+                <th class="px-6 py-3">Produto</th>
+                <th class="px-6 py-3 text-center">Und</th>
+                <th id="th-base-name" class="px-6 py-3 text-right">Contagem (A)</th>
+                <th id="th-comp-name" class="px-6 py-3 text-right">Contagem (B)</th>
+                <th class="px-6 py-3 text-right">Variação (B - A)</th>
+                <th class="px-6 py-3 text-right">Custo Unit</th>
+                <th class="px-6 py-3 text-right">Custo Variação</th>
+              </tr>
+            </thead>
+            <tbody id="table-report-body" class="divide-y divide-slate-100 text-sm bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="report-empty-state" class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
+        <p class="text-sm font-semibold text-slate-700">Selecione os parâmetros acima para realizar o cruzamento das contagens.</p>
+        <p class="text-xs text-slate-400 mt-1">É possível cruzar dados de datas e turnos diferentes para mapear quebras ou variações ocultas de stock.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // =========================================================
+    // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT (WEB APP)
+    // =========================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbwZ7BbwPO6uBTRnyBVcq1CKPm1v9N400Z-PSGV6m2bg-5y_a0EmvkufTRAmx_ETdIQjew/exec";
+
+    let ALL_PRODUCTS = [];
+    let ALL_SESSIONS = [];
+    let activeSession = { quemContou: '', local: '', tipo: 'inicial', data: '', itens: [] };
+    let USER_NAMES = ['Rodrigo Santos', 'Maria Silva'];
+
+    let chartLinhaInstance = null;
+    let chartRoscaInstance = null;
+    let chartBarrasInstance = null;
+    let currentDashChartType = 'inicial';
+
+    window.onload = async function() {
+      const dataHojeStr = new Date().toISOString().split('T')[0];
+      document.getElementById('report-date-a').value = dataHojeStr;
+      document.getElementById('report-date-b').value = dataHojeStr;
+      
+      // Tentar carregar os dados via Fetch (Vercel -> Google Sheets)
+      carregarDadosAPI();
+    };
+
+    async function carregarDadosAPI() {
+      const statusEl = document.getElementById('status-conexao');
+      
+      try {
+        if (!API_URL.startsWith("http")) {
+            statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Faltou colar a API_URL';
+            statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
+            return;
+        }
+
+        // Busca Produtos
+        const resProd = await fetch(`${API_URL}?action=getProdutos`);
+        const prods = await resProd.json();
+        if(prods && prods.length > 0) ALL_PRODUCTS = prods;
+
+        // Busca Histórico
+        const resHist = await fetch(`${API_URL}?action=getHistorico`);
+        const hist = await resHist.json();
+        if(hist && hist.length > 0) ALL_SESSIONS = groupHistoryBySession(hist);
+
+        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado e Sincronizado';
+        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
+
+      } catch(err) {
+        console.error(err);
+        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Ligação';
+        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
+      }
+    }
+
+    // A lógica original das Abas
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('#nav-tabs button').forEach(b => {
+        b.classList.remove('border-blue-600', 'text-blue-600', 'bg-blue-50/10');
+        b.classList.add('border-transparent', 'text-slate-500');
+      });
+
+      if (tab === 'counting') {
+        document.getElementById('view-counting-step1').classList.remove('hidden');
+        document.getElementById('btn-tab-counting').classList.add('border-blue-600', 'text-blue-600', 'bg-blue-50/10');
+      } else if (tab === 'dashboard') {
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('btn-tab-dashboard').classList.add('border-blue-600', 'text-blue-600', 'bg-blue-50/10');
+        renderDashboard();
+      } else if (tab === 'report') {
+        document.getElementById('view-report').classList.remove('hidden');
+        document.getElementById('btn-tab-report').classList.add('border-blue-600', 'text-blue-600', 'bg-blue-50/10');
+      }
+    }
+
+    // Funções de interface e formulário originais
+    function filterNameSuggestions(val) {
+      const dropdown = document.getElementById('names-dropdown');
+      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
+      const filtered = USER_NAMES.filter(n => n.toLowerCase().includes(val.toLowerCase()));
+      if (filtered.length > 0) {
+        dropdown.innerHTML = filtered.map(name => 
+          `<button type="button" onclick="selectNameSuggestion('${name}')" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-all">${name}</button>`
+        ).join('');
+        dropdown.classList.remove('hidden');
+      } else { dropdown.classList.add('hidden'); }
+    }
+
+    function selectNameSuggestion(name) {
+      document.getElementById('input-quemContou').value = name;
+      document.getElementById('names-dropdown').classList.add('hidden');
+    }
+
+    function showNamesDropdown() {
+      const val = document.getElementById('input-quemContou').value;
+      filterNameSuggestions(val || ' ');
+    }
+
+    function setTipo(tipo) {
+      activeSession.tipo = tipo;
+      const btnInit = document.getElementById('btn-tipo-inicial');
+      const btnFinal = document.getElementById('btn-tipo-final');
+      if (tipo === 'inicial') {
+        btnInit.className = 'py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-2 ring-blue-500/10';
+        btnFinal.className = 'py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+      } else {
+        btnFinal.className = 'py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-2 ring-blue-500/10';
+        btnInit.className = 'py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+      }
+    }
+
+    function handleNextStep(e) {
+      e.preventDefault();
+      const quemContou = document.getElementById('input-quemContou').value.trim();
+      const local = document.getElementById('select-local').value;
+
+      if (!quemContou || !local) { alert('Preencha os campos obrigatórios!'); return; }
+
+      activeSession.quemContou = quemContou;
+      activeSession.local = local;
+      
+      if (!USER_NAMES.includes(quemContou)) { USER_NAMES.push(quemContou); }
+
+      document.getElementById('display-local').innerText = local;
+      document.getElementById('display-responsavel').innerText = quemContou;
+      document.getElementById('display-tipo').innerText = activeSession.tipo.toUpperCase();
+      document.getElementById('display-tipo').className = activeSession.tipo === 'inicial' 
+        ? 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/20 text-blue-600'
+        : 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-600';
+
+      document.getElementById('view-counting-step1').classList.add('hidden');
+      document.getElementById('view-counting-step2').classList.remove('hidden');
+      renderAddedItems();
+    }
+
+    function backToStep1() {
+      document.getElementById('view-counting-step2').classList.add('hidden');
+      document.getElementById('view-counting-step1').classList.remove('hidden');
+    }
+
+    function filterCodSuggestions(val) {
+      const dropdown = document.getElementById('cod-dropdown');
+      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
+      const filtered = ALL_PRODUCTS.filter(p => p.cod.toLowerCase().includes(val.toLowerCase()));
+      if (filtered.length > 0) {
+        dropdown.innerHTML = filtered.map(p => 
+          `<button type="button" onclick="selectProduct('${p.cod}')" class="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex justify-between transition-all">
+            <span class="font-bold text-slate-800">${p.cod}</span>
+            <span class="text-slate-400 truncate max-w-[120px]">${p.item}</span>
+          </button>`
+        ).join('');
+        dropdown.classList.remove('hidden');
+      } else { dropdown.classList.add('hidden'); }
+    }
+
+    function filterItemSuggestions(val) {
+      const dropdown = document.getElementById('item-dropdown');
+      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
+      const filtered = ALL_PRODUCTS.filter(p => p.item.toLowerCase().includes(val.toLowerCase()));
+      if (filtered.length > 0) {
+        dropdown.innerHTML = filtered.map(p => 
+          `<button type="button" onclick="selectProduct('${p.cod}')" class="w-full text-left px-3 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex justify-between transition-all">
+            <span class="font-semibold text-slate-800">${p.item}</span>
+            <span class="text-slate-400 font-mono text-[10px]">${p.cod}</span>
+          </button>`
+        ).join('');
+        dropdown.classList.remove('hidden');
+      } else { dropdown.classList.add('hidden'); }
+    }
+
+    function selectProduct(cod) {
+      const prod = ALL_PRODUCTS.find(p => p.cod === cod);
+      if (prod) {
+        document.getElementById('input-cod').value = prod.cod;
+        document.getElementById('input-item').value = prod.item;
+        document.getElementById('display-unidade').innerText = prod.unidade;
+        document.getElementById('display-custo').innerText = 'R$ ' + prod.custo.toFixed(2);
+        
+        document.getElementById('cod-dropdown').classList.add('hidden');
+        document.getElementById('item-dropdown').classList.add('hidden');
+        document.getElementById('input-quantidade').focus();
+      }
+    }
+
+    function validateCommaNumber(input) {
+      let val = input.value.replace(/\./g, ',');
+      const commaCount = (val.match(/,/g) || []).length;
+      if (commaCount > 1) { val = val.substring(0, val.lastIndexOf(',')); }
+      input.value = val.replace(/[^0-9,]/g, '');
+    }
+
+    function handleAddItem(e) {
+      e.preventDefault();
+      const cod = document.getElementById('input-cod').value;
+      const item = document.getElementById('input-item').value;
+      const qtyStr = document.getElementById('input-quantidade').value;
+
+      if (!cod || !item || !qtyStr) { alert('Preencha os campos corretamente.'); return; }
+      const qty = parseFloat(qtyStr.replace(',', '.')) || 0;
+      if (qty <= 0) { alert('Insira um valor maior que zero.'); return; }
+
+      const originalProd = ALL_PRODUCTS.find(p => p.cod === cod) || { custo: 0, unidade: 'un' };
+      const existingIdx = activeSession.itens.findIndex(i => i.cod === cod);
+
+      if (existingIdx !== -1) {
+        if (confirm('Item já existente. Deseja somar as quantidades?')) {
+          activeSession.itens[existingIdx].quantidade += qty;
+        }
+      } else {
+        activeSession.itens.push({
+          cod: cod, item: item, unidade: originalProd.unidade, custo: originalProd.custo, quantidade: qty
+        });
+      }
+
+      document.getElementById('input-cod').value = '';
+      document.getElementById('input-item').value = '';
+      document.getElementById('display-unidade').innerText = '-';
+      document.getElementById('display-custo').innerText = '-';
+      document.getElementById('input-quantidade').value = '';
+      renderAddedItems();
+    }
+
+    function renderAddedItems() {
+      const tbody = document.getElementById('table-added-items');
+      tbody.innerHTML = '';
+      let totalSum = 0;
+
+      if (activeSession.itens.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Nenhum item adicionado.</td></tr>`;
+        document.getElementById('display-total-acumulado').innerText = 'R$ 0,00';
+        return;
+      }
+
+      activeSession.itens.forEach((item, idx) => {
+        const subtotal = item.quantidade * item.custo;
+        totalSum += subtotal;
+        tbody.innerHTML += `<tr class="hover:bg-slate-50/50 transition-colors">
+          <td class="px-6 py-3 font-mono text-xs font-semibold text-slate-500">${item.cod}</td>
+          <td class="px-6 py-3 font-semibold text-slate-800">${item.item}</td>
+          <td class="px-6 py-3 text-center text-slate-500 font-medium">${item.unidade}</td>
+          <td class="px-6 py-3 text-right font-bold text-slate-900 font-mono">${item.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+          <td class="px-6 py-3 text-right text-slate-500 font-mono">R$ ${item.custo.toFixed(2)}</td>
+          <td class="px-6 py-3 text-right font-semibold text-slate-800 font-mono">R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+          <td class="px-6 py-3 text-center">
+            <button onclick="editAddedItem(${idx})" class="text-blue-600 hover:underline mr-3 font-medium transition-all">Editar</button>
+            <button onclick="deleteAddedItem(${idx})" class="text-rose-600 hover:underline font-medium transition-all">Apagar</button>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('display-total-acumulado').innerText = 'R$ ' + totalSum.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    }
+
+    function editAddedItem(idx) {
+      const item = activeSession.itens[idx];
+      document.getElementById('input-cod').value = item.cod;
+      document.getElementById('input-item').value = item.item;
+      document.getElementById('display-unidade').innerText = item.unidade;
+      document.getElementById('display-custo').innerText = 'R$ ' + item.custo.toFixed(2);
+      document.getElementById('input-quantidade').value = item.quantidade.toString().replace('.', ',');
+      activeSession.itens.splice(idx, 1);
+      renderAddedItems();
+    }
+
+    function deleteAddedItem(idx) {
+      if (confirm('Excluir item?')) { activeSession.itens.splice(idx, 1); renderAddedItems(); }
+    }
+
+    function clearAddedItems() {
+      if (confirm('Limpar tudo?')) { activeSession.itens = []; renderAddedItems(); }
+    }
+
+    function finalizeCountToPDV() {
+      if (activeSession.itens.length === 0) { alert('A lista está vazia!'); return; }
+      activeSession.data = new Date().toISOString().split('.')[0];
+
+      document.getElementById('ticket-data').innerText = formatDateTime(activeSession.data);
+      document.getElementById('ticket-responsavel').innerText = activeSession.quemContou;
+      document.getElementById('ticket-local').innerText = activeSession.local;
+      document.getElementById('ticket-tipo').innerText = activeSession.tipo === 'inicial' ? 'CONTAGEM INICIAL' : 'CONTAGEM FINAL';
+      
+      const ticketBody = document.getElementById('ticket-items-body');
+      ticketBody.innerHTML = '';
+      let totalValue = 0, totalQty = 0;
+
+      activeSession.itens.forEach(item => {
+        const subtotal = item.quantidade * item.custo;
+        totalValue += subtotal;
+        totalQty += item.quantidade;
+        ticketBody.innerHTML += `
+          <tr class="font-semibold text-slate-900">
+            <td colspan="4" class="pt-2 pb-0.5 text-[11px] leading-tight">${item.cod} - ${item.item}</td>
+          </tr>
+          <tr class="text-slate-600 text-[11px] border-b border-slate-100">
+            <td class="py-0.5 pl-2">x R$ ${item.custo.toFixed(2)}</td>
+            <td class="py-0.5 text-center">${item.unidade}</td>
+            <td class="py-0.5 text-right font-bold text-slate-900">${item.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td class="py-0.5 text-right font-bold text-slate-900">R$ ${subtotal.toFixed(2)}</td>
+          </tr>`;
+      });
+
+      document.getElementById('ticket-total-itens').innerText = activeSession.itens.length;
+      document.getElementById('ticket-soma-qte').innerText = totalQty.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      document.getElementById('ticket-valor-total').innerText = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+      document.getElementById('nav-tabs').classList.add('hidden');
+      document.getElementById('view-counting-step2').classList.add('hidden');
+      document.getElementById('view-counting-pdv').classList.remove('hidden');
+      document.getElementById('save-status-box').classList.add('hidden');
+    }
+
+    // NOVA FUNÇÃO DE GRAVAÇÃO (FETCH POST para o Google Apps Script)
+    async function saveSessionToSheets() {
+      const btn = document.getElementById('btn-save-sheets');
+      btn.disabled = true;
+      btn.innerText = 'Sincronizando...';
+
+      const payload = {
+        action: 'saveCounts',
+        metadata: { quemContou: activeSession.quemContou, local: activeSession.local, tipo: activeSession.tipo, data: activeSession.data },
+        counts: activeSession.itens
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        
+        const resJson = await response.json();
+        
+        if(resJson.status === "success") {
+            btn.innerText = 'Salvo no Google Sheets!';
+            btn.className = 'w-full py-3.5 px-4 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-semibold cursor-not-allowed';
+            const statusBox = document.getElementById('save-status-box');
+            statusBox.classList.remove('hidden');
+            document.getElementById('save-status-msg').innerText = "Processado via API com sucesso na folha de cálculo vinculada!";
+            
+            // Adicionar localmente para atualizar dashboard sem F5
+            ALL_SESSIONS.push(JSON.parse(JSON.stringify(activeSession)));
+        } else {
+            throw new Error(resJson.message);
+        }
+      } catch (err) {
+        alert('Falha de comunicação com o servidor: ' + err);
+        btn.disabled = false;
+        btn.innerText = 'Tentar Novamente';
+      }
+    }
+
+    function printPdvTicket() {
+      const ticketHtml = document.getElementById('pdv-ticket').innerHTML;
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`<html><head><title>Print Audit</title><style>body { font-family: monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 11px; } .text-center { text-align: center; } table { width:100%; border-collapse:collapse; }</style></head><body>${ticketHtml}<script>window.onload=function(){window.print();setTimeout(function(){window.close();},300);};<\/script></body></html>`);
+        printWindow.document.close();
+      } else { alert('Habilite pop-ups para emissão de vias térmicas.'); }
+    }
+
+    function resetToHome() {
+      activeSession = { quemContou: '', local: '', tipo: 'inicial', data: '', itens: [] };
+      document.getElementById('input-quemContou').value = '';
+      document.getElementById('select-local').value = '';
+      setTipo('inicial');
+      
+      const btnSave = document.getElementById('btn-save-sheets');
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.innerText = 'Salvar no Google Sheets';
+        btnSave.className = 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md transition-all';
+      }
+
+      document.getElementById('nav-tabs').classList.remove('hidden');
+      document.getElementById('view-counting-pdv').classList.add('hidden');
+      switchTab('counting');
+    }
+
+    // Dashboard e Relatórios
+    function generateDifferenceReport() {
+      const dateA = document.getElementById('report-date-a').value;
+      const typeA = document.getElementById('report-type-a').value;
+      const local = document.getElementById('report-local').value;
+      const dateB = document.getElementById('report-date-b').value;
+      const typeB = document.getElementById('report-type-b').value;
+
+      if (!dateA || !dateB || !local) { alert('Preencha os filtros obrigatórios.'); return; }
+
+      document.getElementById('th-base-name').innerText = `${typeA.toUpperCase()} (${converterFormatoDataBR(dateA)})`;
+      document.getElementById('th-comp-name').innerText = `${typeB.toUpperCase()} (${converterFormatoDataBR(dateB)})`;
+      
+      const baseCounts = {}, compCounts = {};
+
+      ALL_SESSIONS.forEach(s => {
+        const sDate = s.data.includes('T') ? s.data.split('T')[0] : s.data.split(' ')[0];
+        if (sDate === dateA && s.local === local && s.tipo === typeA) {
+          s.itens.forEach(item => {
+            if (!baseCounts[item.cod]) { baseCounts[item.cod] = { qty: 0, item: item.item, unidade: item.unidade, custo: item.custo }; }
+            baseCounts[item.cod].qty += item.quantidade;
+          });
+        }
+      });
+
+      ALL_SESSIONS.forEach(s => {
+        const sDate = s.data.includes('T') ? s.data.split('T')[0] : s.data.split(' ')[0];
+        if (sDate === dateB && s.local === local && s.tipo === typeB) {
+          s.itens.forEach(item => {
+            if (!compCounts[item.cod]) { compCounts[item.cod] = { qty: 0, item: item.item, unidade: item.unidade, custo: item.custo }; }
+            compCounts[item.cod].qty += item.quantidade;
+          });
+        }
+      });
+
+      const allCodes = Array.from(new Set([...Object.keys(baseCounts), ...Object.keys(compCounts)]));
+      const tbody = document.getElementById('table-report-body');
+      tbody.innerHTML = '';
+
+      if (allCodes.length === 0) {
+        document.getElementById('report-results-card').classList.add('hidden');
+        document.getElementById('report-empty-state').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('report-empty-state').classList.add('hidden');
+      document.getElementById('report-results-card').classList.remove('hidden');
+
+      allCodes.forEach(cod => {
+        const valA = baseCounts[cod] || { qty: 0 };
+        const valB = compCounts[cod] || { qty: 0 };
+        const name = baseCounts[cod]?.item || compCounts[cod]?.item;
+        const uni = baseCounts[cod]?.unidade || compCounts[cod]?.unidade;
+        const cost = baseCounts[cod]?.custo || compCounts[cod]?.custo;
+        const diff = valB.qty - valA.qty;
+        const totalCostDiff = diff * cost;
+
+        tbody.innerHTML += `<tr class="hover:bg-slate-50/50 transition-colors">
+          <td class="px-6 py-3.5 font-mono text-xs font-semibold text-slate-500">${cod}</td>
+          <td class="px-6 py-3.5 font-semibold text-slate-800">${name}</td>
+          <td class="px-6 py-3.5 text-center text-slate-500 font-medium">${uni}</td>
+          <td class="px-6 py-3.5 text-right font-mono text-slate-600">${valA.qty.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+          <td class="px-6 py-3.5 text-right font-mono text-slate-600">${valB.qty.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+          <td class="px-6 py-3.5 text-right font-mono font-bold ${diff > 0 ? 'text-blue-600' : diff < 0 ? 'text-rose-600' : 'text-slate-500'}">
+            ${diff > 0 ? '+' : ''}${diff.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </td>
+          <td class="px-6 py-3.5 text-right text-slate-500 font-mono">R$ ${cost.toFixed(2)}</td>
+          <td class="px-6 py-3.5 text-right font-mono font-bold ${totalCostDiff > 0 ? 'text-blue-600' : totalCostDiff < 0 ? 'text-rose-600' : 'text-slate-500'}">
+            R$ ${totalCostDiff.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </td>
+        </tr>`;
+      });
+    }
+
+    function converterFormatoDataBR(stringData) {
+      if (!stringData) return "";
+      const partes = stringData.split('-');
+      if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      return stringData;
+    }
+
+    function setDashChartType(type) {
+      currentDashChartType = type;
+      document.getElementById('dash-btn-inicial').className = type === 'inicial' ? 'px-3 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm font-semibold transition-all' : 'px-3 py-1.5 rounded-lg text-slate-600 font-medium transition-all';
+      document.getElementById('dash-btn-final').className = type === 'final' ? 'px-3 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm font-semibold transition-all' : 'px-3 py-1.5 rounded-lg text-slate-600 font-medium transition-all';
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      const selectedLocal = document.getElementById('dash-select-local').value;
+      const filtered = selectedLocal === 'Todos' ? ALL_SESSIONS : ALL_SESSIONS.filter(s => s.local === selectedLocal);
+
+      document.getElementById('dash-kpi-sessoes').innerText = filtered.length;
+      
+      let sumTot = 0, lastVal = 0;
+      const sorted = [...filtered].sort((a,b) => b.data.localeCompare(a.data));
+      
+      filtered.forEach(s => { sumTot += s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); });
+      if (sorted.length > 0) { lastVal = sorted[0].itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); }
+
+      document.getElementById('dash-kpi-ultimo').innerText = 'R$ ' + lastVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      document.getElementById('dash-kpi-media').innerText = 'R$ ' + (filtered.length > 0 ? (sumTot / filtered.length) : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+      const lineDataMap = {};
+      filtered.forEach(s => {
+        if (s.tipo !== currentDashChartType) return;
+        const dateStr = s.data.includes('T') ? s.data.split('T')[0] : s.data.split(' ')[0];
+        lineDataMap[dateStr] = (lineDataMap[dateStr] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0);
+      });
+
+      const lineLabels = Object.keys(lineDataMap).sort();
+      const lineValues = lineLabels.map(l => lineDataMap[l]);
+      const lineFormattedLabels = lineLabels.map(l => l.split('-').reverse().slice(0, 2).join('/'));
+
+      if (chartLinhaInstance) chartLinhaInstance.destroy();
+      chartLinhaInstance = new Chart(document.getElementById('chart-linha').getContext('2d'), {
+        type: 'line',
+        data: { labels: lineFormattedLabels, datasets: [{ data: lineValues, borderColor: '#0f172a', backgroundColor: 'rgba(15, 23, 42, 0.05)', borderWidth: 3, fill: true, tension: 0.25 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      const sectorMap = {};
+      ALL_SESSIONS.forEach(s => { sectorMap[s.local] = (sectorMap[s.local] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); });
+
+      if (chartRoscaInstance) chartRoscaInstance.destroy();
+      chartRoscaInstance = new Chart(document.getElementById('chart-rosca').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(sectorMap), datasets: [{ data: Object.values(sectorMap), backgroundColor: ['#0f172a', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, fontSize: 10 } } } }
+      });
+
+      const barProdMap = {};
+      filtered.forEach(s => { s.itens.forEach(item => { barProdMap[item.item] = (barProdMap[item.item] || 0) + (item.quantidade * item.custo); }); });
+      const sortedProds = Object.keys(barProdMap).map(k => ({ name: k, value: barProdMap[k] })).sort((a,b) => b.value - a.value).slice(0, 8);
+
+      if (chartBarrasInstance) chartBarrasInstance.destroy();
+      chartBarrasInstance = new Chart(document.getElementById('chart-barras').getContext('2d'), {
+        type: 'bar',
+        data: { labels: sortedProds.map(p => p.name), datasets: [{ data: sortedProds.map(p => p.value), backgroundColor: '#3b82f6', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    function formatDateTime(isoStr) {
+      try { const parts = isoStr.split('T'), d = parts[0].split('-'), t = parts[1].split(':'); return `${d[2]}/${d[1]}/${d[0]} ${t[0]}:${t[1]}`; } 
+      catch(e) { return isoStr; }
+    }
+
+    function groupHistoryBySession(history) {
+      const sessionsMap = {};
+      history.forEach(row => {
+        const sessionKey = `${row.data}_${row.quemContou}_${row.local}_${row.tipo}`;
+        if (!sessionsMap[sessionKey]) { sessionsMap[sessionKey] = { id: sessionKey, quemContou: row.quemContou, local: row.local, tipo: row.tipo, data: row.data, itens: [] }; }
+        sessionsMap[sessionKey].itens.push({ cod: row.cod, item: row.item, unidade: row.unidade, quantidade: row.quantidade, custo: row.custo });
+      });
+      return Object.values(sessionsMap);
+    }
+  </script>
+</body>
+</html>
