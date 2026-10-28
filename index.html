@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,13 +11,13 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; } /* Fundo claro executivo */
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-  <!-- CABEÇALHO (Azul Marinho / Slate 900) -->
+  <!-- CABEÇALHO -->
   <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 px-6 py-4">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -32,7 +32,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <span id="status-conexao" class="flex items-center gap-1 px-3 py-1 bg-amber-500/15 text-amber-400 rounded-full border border-amber-500/20 text-xs font-semibold">
+        <span id="status-conexao" class="flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-500 rounded-full border border-amber-500/20 text-xs font-semibold">
           <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
           A aguardar sincronização
         </span>
@@ -420,9 +420,6 @@
   </main>
 
   <script>
-    // =========================================================
-    // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT (WEB APP)
-    // =========================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbwZ7BbwPO6uBTRnyBVcq1CKPm1v9N400Z-PSGV6m2bg-5y_a0EmvkufTRAmx_ETdIQjew/exec";
 
     let ALL_PRODUCTS = [];
@@ -435,47 +432,45 @@
     let chartBarrasInstance = null;
     let currentDashChartType = 'inicial';
 
-    window.onload = async function() {
+    window.onload = function() {
       const dataHojeStr = new Date().toISOString().split('T')[0];
       document.getElementById('report-date-a').value = dataHojeStr;
       document.getElementById('report-date-b').value = dataHojeStr;
       
-      // Tentar carregar os dados via Fetch (Vercel -> Google Sheets)
+      carregarDadosAPI();
+    };
 
-      function carregarDadosAPI() {
+    function carregarDadosAPI() {
       const statusEl = document.getElementById('status-conexao');
       
       if (!API_URL || !API_URL.startsWith("http")) {
         statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Faltou colar a API_URL';
-        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
+        statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
         return;
       }
 
       statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span> Sincronizando produtos...';
-      statusEl.className = "flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-200 text-xs font-semibold";
+      statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-200 text-xs font-semibold";
 
-      // Cria a função global que receberá os dados sem bloqueio de CORS
       window.receberProdutos = function(prods) {
         if (Array.isArray(prods) && prods.length > 0) {
           ALL_PRODUCTS = prods;
-          statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado e Sincronizado (' + prods.length + ' itens)';
-          statusEl.className = "flex items-center gap-1 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
+          statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado (' + prods.length + ' itens)';
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
         } else {
           statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Nenhum produto retornado';
-          statusEl.className = "flex items-center gap-1 px-3 py-1 bg-amber-500/15 text-amber-600 rounded-full border border-amber-500/20 text-xs font-semibold";
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-600 rounded-full border border-amber-500/20 text-xs font-semibold";
         }
       };
 
-      // Injeta script dinâmico para buscar Produtos via JSONP
       const scriptProd = document.createElement('script');
       scriptProd.src = `${API_URL}?action=getProdutos&callback=receberProdutos`;
       scriptProd.onerror = function() {
         statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Conexão com o Google';
-        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
+        statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
       };
       document.body.appendChild(scriptProd);
 
-      // Função global para receber Histórico (para alimentar Dashboard)
       window.receberHistorico = function(hist) {
         if (Array.isArray(hist) && hist.length > 0) {
           ALL_SESSIONS = groupHistoryBySession(hist);
@@ -486,17 +481,7 @@
       scriptHist.src = `${API_URL}?action=getHistorico&callback=receberHistorico`;
       document.body.appendChild(scriptHist);
     }
-        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado e Sincronizado';
-        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
 
-      } catch(err) {
-        console.error("Falha ao sincronizar com Google Sheets:", err);
-        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Conexão';
-        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
-      }
-    }
-
-    // A lógica original das Abas
     function switchTab(tab) {
       document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
       document.querySelectorAll('#nav-tabs button').forEach(b => {
@@ -517,7 +502,6 @@
       }
     }
 
-    // Funções de interface e formulário originais
     function filterNameSuggestions(val) {
       const dropdown = document.getElementById('names-dropdown');
       if (!val.trim()) { dropdown.classList.add('hidden'); return; }
@@ -539,6 +523,12 @@
       const val = document.getElementById('input-quemContou').value;
       filterNameSuggestions(val || ' ');
     }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#input-quemContou')) document.getElementById('names-dropdown').classList.add('hidden');
+      if (!e.target.closest('#input-cod')) document.getElementById('cod-dropdown').classList.add('hidden');
+      if (!e.target.closest('#input-item')) document.getElementById('item-dropdown').classList.add('hidden');
+    });
 
     function setTipo(tipo) {
       activeSession.tipo = tipo;
@@ -618,7 +608,7 @@
         document.getElementById('input-cod').value = prod.cod;
         document.getElementById('input-item').value = prod.item;
         document.getElementById('display-unidade').innerText = prod.unidade;
-        document.getElementById('display-custo').innerText = 'R$ ' + prod.custo.toFixed(2);
+        document.getElementById('display-custo').innerText = 'R$ ' + Number(prod.custo).toFixed(2);
         
         document.getElementById('cod-dropdown').classList.add('hidden');
         document.getElementById('item-dropdown').classList.add('hidden');
@@ -652,7 +642,7 @@
         }
       } else {
         activeSession.itens.push({
-          cod: cod, item: item, unidade: originalProd.unidade, custo: originalProd.custo, quantidade: qty
+          cod: cod, item: item, unidade: originalProd.unidade, custo: Number(originalProd.custo) || 0, quantidade: qty
         });
       }
 
@@ -699,7 +689,7 @@
       document.getElementById('input-cod').value = item.cod;
       document.getElementById('input-item').value = item.item;
       document.getElementById('display-unidade').innerText = item.unidade;
-      document.getElementById('display-custo').innerText = 'R$ ' + item.custo.toFixed(2);
+      document.getElementById('display-custo').innerText = 'R$ ' + Number(item.custo).toFixed(2);
       document.getElementById('input-quantidade').value = item.quantidade.toString().replace('.', ',');
       activeSession.itens.splice(idx, 1);
       renderAddedItems();
@@ -752,7 +742,6 @@
       document.getElementById('save-status-box').classList.add('hidden');
     }
 
-    // NOVA FUNÇÃO DE GRAVAÇÃO (FETCH POST para o Google Apps Script)
     async function saveSessionToSheets() {
       const btn = document.getElementById('btn-save-sheets');
       btn.disabled = true;
@@ -773,17 +762,16 @@
         
         const resJson = await response.json();
         
-        if(resJson.status === "success") {
-            btn.innerText = 'Salvo no Google Sheets!';
-            btn.className = 'w-full py-3.5 px-4 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-semibold cursor-not-allowed';
-            const statusBox = document.getElementById('save-status-box');
-            statusBox.classList.remove('hidden');
-            document.getElementById('save-status-msg').innerText = "Processado via API com sucesso na folha de cálculo vinculada!";
-            
-            // Adicionar localmente para atualizar dashboard sem F5
-            ALL_SESSIONS.push(JSON.parse(JSON.stringify(activeSession)));
+        if (resJson.status === "success") {
+          btn.innerText = 'Salvo no Google Sheets!';
+          btn.className = 'w-full py-3.5 px-4 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-semibold cursor-not-allowed';
+          const statusBox = document.getElementById('save-status-box');
+          statusBox.classList.remove('hidden');
+          document.getElementById('save-status-msg').innerText = "Processado via API com sucesso na folha de cálculo vinculada!";
+          
+          ALL_SESSIONS.push(JSON.parse(JSON.stringify(activeSession)));
         } else {
-            throw new Error(resJson.message);
+          throw new Error(resJson.message);
         }
       } catch (err) {
         alert('Falha de comunicação com o servidor: ' + err);
@@ -819,7 +807,6 @@
       switchTab('counting');
     }
 
-    // Dashboard e Relatórios
     function generateDifferenceReport() {
       const dateA = document.getElementById('report-date-a').value;
       const typeA = document.getElementById('report-type-a').value;
@@ -872,7 +859,7 @@
         const valB = compCounts[cod] || { qty: 0 };
         const name = baseCounts[cod]?.item || compCounts[cod]?.item;
         const uni = baseCounts[cod]?.unidade || compCounts[cod]?.unidade;
-        const cost = baseCounts[cod]?.custo || compCounts[cod]?.custo;
+        const cost = Number(baseCounts[cod]?.custo || compCounts[cod]?.custo) || 0;
         const diff = valB.qty - valA.qty;
         const totalCostDiff = diff * cost;
 
@@ -916,8 +903,8 @@
       let sumTot = 0, lastVal = 0;
       const sorted = [...filtered].sort((a,b) => b.data.localeCompare(a.data));
       
-      filtered.forEach(s => { sumTot += s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); });
-      if (sorted.length > 0) { lastVal = sorted[0].itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); }
+      filtered.forEach(s => { sumTot += s.itens.reduce((sum, item) => sum + (item.quantidade * (Number(item.custo) || 0)), 0); });
+      if (sorted.length > 0) { lastVal = sorted[0].itens.reduce((sum, item) => sum + (item.quantidade * (Number(item.custo) || 0)), 0); }
 
       document.getElementById('dash-kpi-ultimo').innerText = 'R$ ' + lastVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
       document.getElementById('dash-kpi-media').innerText = 'R$ ' + (filtered.length > 0 ? (sumTot / filtered.length) : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
@@ -926,7 +913,7 @@
       filtered.forEach(s => {
         if (s.tipo !== currentDashChartType) return;
         const dateStr = s.data.includes('T') ? s.data.split('T')[0] : s.data.split(' ')[0];
-        lineDataMap[dateStr] = (lineDataMap[dateStr] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0);
+        lineDataMap[dateStr] = (lineDataMap[dateStr] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * (Number(item.custo) || 0)), 0);
       });
 
       const lineLabels = Object.keys(lineDataMap).sort();
@@ -941,7 +928,7 @@
       });
 
       const sectorMap = {};
-      ALL_SESSIONS.forEach(s => { sectorMap[s.local] = (sectorMap[s.local] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * item.custo), 0); });
+      ALL_SESSIONS.forEach(s => { sectorMap[s.local] = (sectorMap[s.local] || 0) + s.itens.reduce((sum, item) => sum + (item.quantidade * (Number(item.custo) || 0)), 0); });
 
       if (chartRoscaInstance) chartRoscaInstance.destroy();
       chartRoscaInstance = new Chart(document.getElementById('chart-rosca').getContext('2d'), {
@@ -951,7 +938,7 @@
       });
 
       const barProdMap = {};
-      filtered.forEach(s => { s.itens.forEach(item => { barProdMap[item.item] = (barProdMap[item.item] || 0) + (item.quantidade * item.custo); }); });
+      filtered.forEach(s => { s.itens.forEach(item => { barProdMap[item.item] = (barProdMap[item.item] || 0) + (item.quantidade * (Number(item.custo) || 0)); }); });
       const sortedProds = Object.keys(barProdMap).map(k => ({ name: k, value: barProdMap[k] })).sort((a,b) => b.value - a.value).slice(0, 8);
 
       if (chartBarrasInstance) chartBarrasInstance.destroy();
@@ -972,7 +959,7 @@
       history.forEach(row => {
         const sessionKey = `${row.data}_${row.quemContou}_${row.local}_${row.tipo}`;
         if (!sessionsMap[sessionKey]) { sessionsMap[sessionKey] = { id: sessionKey, quemContou: row.quemContou, local: row.local, tipo: row.tipo, data: row.data, itens: [] }; }
-        sessionsMap[sessionKey].itens.push({ cod: row.cod, item: row.item, unidade: row.unidade, quantidade: row.quantidade, custo: row.custo });
+        sessionsMap[sessionKey].itens.push({ cod: row.cod, item: row.item, unidade: row.unidade, quantidade: row.quantidade, custo: Number(row.custo) || 0 });
       });
       return Object.values(sessionsMap);
     }
