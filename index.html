@@ -454,22 +454,46 @@
             return;
         }
 
-        // Busca Produtos
-        const resProd = await fetch(`${API_URL}?action=getProdutos`);
-        const prods = await resProd.json();
-        if(prods && prods.length > 0) ALL_PRODUCTS = prods;
+        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span> Carregando itens...';
+        statusEl.className = "flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-200 text-xs font-semibold";
 
-        // Busca Histórico
-        const resHist = await fetch(`${API_URL}?action=getHistorico`);
-        const hist = await resHist.json();
-        if(hist && hist.length > 0) ALL_SESSIONS = groupHistoryBySession(hist);
+        // 1. Busca os Produtos com tratamento de redirecionamento do Google
+        const resProd = await fetch(`${API_URL}?action=getProdutos`, {
+            method: 'GET',
+            mode: 'cors',
+            redirect: 'follow'
+        });
+        
+        const prods = await resProd.json();
+        
+        if (Array.isArray(prods) && prods.length > 0) {
+            ALL_PRODUCTS = prods;
+            console.log("Itens carregados com sucesso:", ALL_PRODUCTS.length);
+        } else if (prods && prods.status === "error") {
+            console.error("Erro retornado pelo Apps Script:", prods.message);
+        }
+
+        // 2. Busca o Histórico de contagens para alimentar o Dashboard
+        try {
+          const resHist = await fetch(`${API_URL}?action=getHistorico`, {
+              method: 'GET',
+              mode: 'cors',
+              redirect: 'follow'
+          });
+          const hist = await resHist.json();
+          if (Array.isArray(hist) && hist.length > 0) {
+              ALL_SESSIONS = groupHistoryBySession(hist);
+          }
+        } catch(e) {
+          console.warn("Histórico não carregado ou vazio:", e);
+        }
 
         statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado e Sincronizado';
         statusEl.className = "flex items-center gap-1 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
 
       } catch(err) {
-        console.error(err);
-        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Ligação';
+        console.error("Falha ao sincronizar com Google Sheets:", err);
+        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Conexão';
         statusEl.className = "flex items-center gap-1 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
       }
     }
