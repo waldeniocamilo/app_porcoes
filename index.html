@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portion Audit - Controlo e Gestão</title>
+  <title>Portion Audit - Controle e Gestão</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js para o Dashboard -->
@@ -17,9 +17,9 @@
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-  <!-- CABEÇALHO -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 px-6 py-4">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- CABEÇALHO EXECUTIVO (Navy Blue / Slate 900) -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 px-4 md:px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
       <div class="flex items-center gap-3">
         <div class="p-2.5 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -27,29 +27,33 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-lg font-extrabold tracking-tight">Portion Audit</h1>
-          <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Dashboard Executivo de Operações</p>
+          <h1 class="text-base md:text-lg font-extrabold tracking-tight">Portion Audit</h1>
+          <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Controle e Auditoria de Porções</p>
         </div>
       </div>
+
       <div class="flex items-center gap-2">
-        <span id="status-conexao" class="flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-500 rounded-full border border-amber-500/20 text-xs font-semibold">
+        <span id="status-conexao" class="flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-400 rounded-full border border-amber-500/20 text-xs font-semibold">
           <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-          A aguardar sincronização
+          Sincronizando...
         </span>
+        <button onclick="carregarDadosAPI(true)" title="Recarregar itens da planilha" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs font-semibold transition-all">
+          ↻
+        </button>
       </div>
     </div>
   </header>
 
   <!-- ABAS DE NAVEGAÇÃO -->
-  <nav id="nav-tabs" class="bg-white border-b border-slate-200 px-6 shadow-sm">
+  <nav id="nav-tabs" class="bg-white border-b border-slate-200 px-4 md:px-6 shadow-sm">
     <div class="max-w-7xl mx-auto flex overflow-x-auto gap-1">
-      <button onclick="switchTab('counting')" id="btn-tab-counting" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 bg-blue-50/10 flex items-center gap-2 transition-all">
+      <button onclick="switchTab('counting')" id="btn-tab-counting" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-blue-600 text-blue-600 bg-blue-50/10 flex items-center gap-2 transition-all whitespace-nowrap">
         Nova Contagem
       </button>
-      <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all">
+      <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all whitespace-nowrap">
         Dashboard
       </button>
-      <button onclick="switchTab('report')" id="btn-tab-report" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all">
+      <button onclick="switchTab('report')" id="btn-tab-report" class="py-4 px-4 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all whitespace-nowrap">
         Relatório Diferenças
       </button>
     </div>
@@ -60,17 +64,17 @@
 
     <!-- TELA 1: IDENTIFICAÇÃO -->
     <div id="view-counting-step1" class="tab-view space-y-6">
-      <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm max-w-xl mx-auto">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm max-w-xl mx-auto">
         <div class="text-center mb-8">
           <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 mb-3">Etapa 1 de 2</span>
           <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Identificação da Contagem</h2>
-          <p class="text-slate-500 text-sm mt-1">Insira as credenciais operacionais para iniciar</p>
+          <p class="text-slate-500 text-sm mt-1">Insira suas credenciais e local para iniciar</p>
         </div>
 
         <form onsubmit="handleNextStep(event)" class="space-y-6">
-          <div class="relative">
+          <div id="container-quemContou" class="relative">
             <label class="block text-sm font-medium text-slate-700 mb-2">Responsável pela Contagem</label>
-            <input type="text" id="input-quemContou" placeholder="Digite o seu nome..." autocomplete="off" oninput="filterNameSuggestions(this.value)" onfocus="showNamesDropdown()" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            <input type="text" id="input-quemContou" placeholder="Digite seu nome..." autocomplete="off" oninput="filterNameSuggestions(this.value)" onfocus="showNamesDropdown()" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
             <div id="names-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"></div>
           </div>
 
@@ -92,11 +96,11 @@
             <div class="grid grid-cols-2 gap-4">
               <button type="button" id="btn-tipo-inicial" onclick="setTipo('inicial')" class="py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-2 ring-blue-500/10">
                 <span class="font-semibold text-sm">Contagem Inicial</span>
-                <span class="text-[10px] opacity-80 font-normal">Abertura de turno</span>
+                <span class="text-[10px] opacity-80 font-normal">Antes do expediente</span>
               </button>
               <button type="button" id="btn-tipo-final" onclick="setTipo('final')" class="py-3.5 px-4 rounded-xl border text-sm font-medium flex flex-col items-center gap-1 transition-all border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
                 <span class="font-semibold text-sm">Contagem Final</span>
-                <span class="text-[10px] opacity-80 font-normal">Fecho de caixa</span>
+                <span class="text-[10px] opacity-80 font-normal">Fechamento do turno</span>
               </button>
             </div>
           </div>
@@ -128,37 +132,49 @@
       </div>
 
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Adicionar Produto</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Adicionar Produto na Contagem</h3>
+          <span id="badge-qtd-catalogo" class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Catálogo: 0 itens</span>
+        </div>
+
         <form onsubmit="handleAddItem(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          <div class="md:col-span-3 relative">
+          <!-- CAMPO CÓDIGO -->
+          <div id="container-cod" class="md:col-span-3 relative">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cód. Produto</label>
-            <input type="text" id="input-cod" placeholder="Pesquisar código..." autocomplete="off" oninput="filterCodSuggestions(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-            <div id="cod-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto font-mono text-xs"></div>
+            <input type="text" id="input-cod" placeholder="Pesquisar código..." autocomplete="off"
+              onfocus="filterCodSuggestions(this.value)"
+              oninput="filterCodSuggestions(this.value)"
+              class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+            <div id="cod-dropdown" class="hidden absolute z-40 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto font-mono text-xs"></div>
           </div>
 
-          <div class="md:col-span-4 relative">
+          <!-- CAMPO PRODUTO -->
+          <div id="container-item" class="md:col-span-4 relative">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Produto</label>
-            <input type="text" id="input-item" placeholder="Pesquisar produto..." autocomplete="off" oninput="filterItemSuggestions(this.value)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-            <div id="item-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto text-xs"></div>
+            <input type="text" id="input-item" placeholder="Digite ou clique para listar..." autocomplete="off"
+              onfocus="filterItemSuggestions(this.value)"
+              oninput="filterItemSuggestions(this.value)"
+              class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+            <div id="item-dropdown" class="hidden absolute z-40 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto text-xs"></div>
           </div>
 
           <div class="md:col-span-1">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Uni</label>
-            <div id="display-unidade" class="w-full px-2 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-sm font-semibold text-slate-700 min-h-[44px] flex items-center justify-center">-</div>
+            <div id="display-unidade" class="w-full px-2 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-sm font-semibold text-slate-700 min-h-[42px] flex items-center justify-center">-</div>
           </div>
 
           <div class="md:col-span-1">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Custo</label>
-            <div id="display-custo" class="w-full px-1 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-mono text-slate-700 min-h-[44px] flex items-center justify-center">-</div>
+            <div id="display-custo" class="w-full px-1 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center text-xs font-mono text-slate-700 min-h-[42px] flex items-center justify-center">-</div>
           </div>
 
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5 text-center">Qtd. Contada</label>
-            <input type="text" id="input-quantidade" placeholder="0,00" oninput="validateCommaNumber(this)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+            <input type="text" id="input-quantidade" inputmode="decimal" placeholder="0,00" oninput="validateCommaNumber(this)" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
           </div>
 
           <div class="md:col-span-1">
-            <button type="submit" class="w-full p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-sm flex items-center justify-center min-h-[44px] text-lg font-bold">+</button>
+            <button type="submit" class="w-full p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-sm flex items-center justify-center min-h-[42px] text-lg font-bold">+</button>
           </div>
         </form>
       </div>
@@ -198,7 +214,7 @@
         <div class="md:col-span-6 flex justify-center">
           <div class="bg-white text-slate-950 p-6 rounded-2xl shadow-xl border border-slate-200 font-mono text-[12px] leading-relaxed w-full max-w-[340px]" id="pdv-ticket">
             <div class="text-center">
-              <h2 class="text-sm font-bold tracking-widest">CONTROLO DE PORÇÕES</h2>
+              <h2 class="text-sm font-bold tracking-widest">CONTROLE DE PORÇÕES</h2>
               <p class="text-[10px] text-slate-500 mt-0.5">SISTEMA DE AUDITORIA DE ESTOQUE</p>
               <div class="border-t-2 border-double border-slate-300 my-3"></div>
             </div>
@@ -239,10 +255,10 @@
         <div class="md:col-span-6 space-y-6">
           <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 class="text-base font-semibold text-slate-900">Ações de Encerramento</h3>
-            <p class="text-xs text-slate-500">Guarde as informações na sua base de dados do Google Sheets e imprima o comprovativo.</p>
+            <p class="text-xs text-slate-500">Salve as informações na planilha do Google Sheets e imprima o comprovante.</p>
             
             <button onclick="saveSessionToSheets()" id="btn-save-sheets" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md transition-all">Salvar no Google Sheets</button>
-            <button onclick="printPdvTicket()" class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Imprimir Comprovativo</button>
+            <button onclick="printPdvTicket()" class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Imprimir Comprovante</button>
             <button onclick="resetToHome()" class="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-sm font-semibold transition-all">Voltar ao Início</button>
           </div>
 
@@ -261,7 +277,7 @@
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 class="text-base font-semibold text-slate-900">Painel de Métricas e Análises</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Visão geral financeira do stock de porções</p>
+          <p class="text-xs text-slate-500 mt-0.5">Visão geral financeira do estoque de porções</p>
         </div>
         <div class="flex items-center gap-2">
           <label class="text-xs font-semibold text-slate-500">Filtrar Local:</label>
@@ -289,7 +305,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
           <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold">💰</div>
           <div>
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Último Fecho</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Último Fechamento</span>
             <h4 id="dash-kpi-ultimo" class="text-2xl font-bold text-slate-900 mt-0.5">R$ 0,00</h4>
             <p class="text-[10px] text-slate-500">Auditoria mais recente</p>
           </div>
@@ -307,7 +323,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col">
           <div class="flex items-center justify-between mb-4">
-            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Evolução do Stock</h4>
+            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Evolução do Estoque</h4>
             <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200">
               <button onclick="setDashChartType('inicial')" id="dash-btn-inicial" class="px-3 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition-all">Inicial</button>
               <button onclick="setDashChartType('final')" id="dash-btn-final" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">Final</button>
@@ -414,13 +430,28 @@
 
       <div id="report-empty-state" class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
         <p class="text-sm font-semibold text-slate-700">Selecione os parâmetros acima para realizar o cruzamento das contagens.</p>
-        <p class="text-xs text-slate-400 mt-1">É possível cruzar dados de datas e turnos diferentes para mapear quebras ou variações ocultas de stock.</p>
+        <p class="text-xs text-slate-400 mt-1">É possível cruzar dados de datas e turnos diferentes para mapear quebras ou variações ocultas de estoque.</p>
       </div>
     </div>
   </main>
 
   <script>
+    // URL DO SEU GOOGLE APPS SCRIPT
     const API_URL = "https://script.google.com/macros/s/AKfycbwZ7BbwPO6uBTRnyBVcq1CKPm1v9N400Z-PSGV6m2bg-5y_a0EmvkufTRAmx_ETdIQjew/exec";
+
+    // Catálogo padrão inicial caso a internet oscile no 1º acesso
+    const DEFAULT_PRODUCTS = [
+      { cod: 'PX0001', item: 'Hambúrguer Bovino 120g', unidade: 'un', custo: 3.50 },
+      { cod: 'PX0002', item: 'Filé de Frango 100g', unidade: 'un', custo: 2.80 },
+      { cod: 'PX0003', item: 'Pão de Brioche', unidade: 'un', custo: 1.20 },
+      { cod: 'PX0004', item: 'Queijo Prato Fatiado', unidade: 'kg', custo: 34.90 },
+      { cod: 'PX0005', item: 'Bacon Crispy', unidade: 'kg', custo: 48.00 },
+      { cod: 'PX0006', item: 'Batata Frita Pré-Frita', unidade: 'kg', custo: 9.50 },
+      { cod: 'PX0007', item: 'Molho Especial Cheddar', unidade: 'l', custo: 22.00 },
+      { cod: 'PX0008', item: 'Cebola Caramelizada', unidade: 'kg', custo: 15.00 },
+      { cod: 'PX0009', item: 'Molho Barbecue', unidade: 'l', custo: 18.50 },
+      { cod: 'PX0010', item: 'Sorvete de Baunilha Base', unidade: 'l', custo: 12.00 }
+    ];
 
     let ALL_PRODUCTS = [];
     let ALL_SESSIONS = [];
@@ -432,54 +463,125 @@
     let chartBarrasInstance = null;
     let currentDashChartType = 'inicial';
 
+    // Remove acentos e espaços extras para busca inteligente
+    function normalizarTexto(texto) {
+      return String(texto || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function atualizarBadgeCatalogo() {
+      const badge = document.getElementById('badge-qtd-catalogo');
+      if (badge) badge.innerText = `Catálogo: ${ALL_PRODUCTS.length} itens`;
+    }
+
     window.onload = function() {
       const dataHojeStr = new Date().toISOString().split('T')[0];
       document.getElementById('report-date-a').value = dataHojeStr;
       document.getElementById('report-date-b').value = dataHojeStr;
-      
+
+      // Carrega cache local imediatamente para resposta instantânea no celular
+      try {
+        const cachedProds = JSON.parse(localStorage.getItem('pa_products') || '[]');
+        if (Array.isArray(cachedProds) && cachedProds.length > 0) {
+          ALL_PRODUCTS = cachedProds;
+        } else {
+          ALL_PRODUCTS = [...DEFAULT_PRODUCTS];
+        }
+        atualizarBadgeCatalogo();
+
+        const cachedNames = JSON.parse(localStorage.getItem('pa_user_names') || '[]');
+        if (Array.isArray(cachedNames) && cachedNames.length > 0) USER_NAMES = cachedNames;
+
+        const cachedSessions = JSON.parse(localStorage.getItem('pa_sessions') || '[]');
+        if (Array.isArray(cachedSessions) && cachedSessions.length > 0) ALL_SESSIONS = cachedSessions;
+      } catch(e) {
+        ALL_PRODUCTS = [...DEFAULT_PRODUCTS];
+      }
+
+      // Sincroniza em seguida com o Google Sheets
       carregarDadosAPI();
     };
 
-    function carregarDadosAPI() {
+    async function carregarDadosAPI(forcar = false) {
       const statusEl = document.getElementById('status-conexao');
-      
-      if (!API_URL || !API_URL.startsWith("http")) {
-        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Faltou colar a API_URL';
-        statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
-        return;
+      statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span> Sincronizando...';
+      statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-blue-500/15 text-blue-300 rounded-full border border-blue-500/20 text-xs font-semibold";
+
+      try {
+        // Chamada GET limpa (sem headers customizados para não disparar preflight CORS no Google)
+        const response = await fetch(`${API_URL}?action=getProdutos&t=${Date.now()}`);
+        const data = await response.json();
+
+        // Suporta retorno direto de Array [...] ou objeto { produtos: [...] }
+        const listaProdutos = Array.isArray(data) ? data : (data && Array.isArray(data.produtos) ? data.produtos : null);
+
+        if (data && data.status === "error") {
+          throw new Error(data.message);
+        }
+
+        if (listaProdutos && listaProdutos.length > 0) {
+          ALL_PRODUCTS = listaProdutos.map(p => ({
+            cod: String(p.cod || '').trim(),
+            item: String(p.item || '').trim(),
+            unidade: String(p.unidade || 'un').trim(),
+            custo: Number(p.custo) || 0
+          }));
+          localStorage.setItem('pa_products', JSON.stringify(ALL_PRODUCTS));
+          atualizarBadgeCatalogo();
+
+          statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online (${ALL_PRODUCTS.length} itens)`;
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 text-emerald-400 rounded-full border border-emerald-500/20 text-xs font-semibold";
+        } else {
+          statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Aba Itens vazia (Usando ${ALL_PRODUCTS.length} locais)`;
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-300 rounded-full border border-amber-500/20 text-xs font-semibold";
+        }
+
+        // Busca Histórico em segundo plano
+        fetch(`${API_URL}?action=getHistorico&t=${Date.now()}`)
+          .then(r => r.json())
+          .then(hist => {
+            if (Array.isArray(hist) && hist.length > 0) {
+              ALL_SESSIONS = groupHistoryBySession(hist);
+              localStorage.setItem('pa_sessions', JSON.stringify(ALL_SESSIONS));
+            }
+          })
+          .catch(() => {});
+
+      } catch (err) {
+        console.warn("Falha no fetch direto, tentando fallback JSONP...", err);
+        tentarFallbackJSONP(statusEl);
       }
+    }
 
-      statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span> Sincronizando produtos...';
-      statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-200 text-xs font-semibold";
-
+    function tentarFallbackJSONP(statusEl) {
       window.receberProdutos = function(prods) {
         if (Array.isArray(prods) && prods.length > 0) {
-          ALL_PRODUCTS = prods;
-          statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado (' + prods.length + ' itens)';
-          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 text-emerald-600 rounded-full border border-emerald-500/20 text-xs font-semibold";
+          ALL_PRODUCTS = prods.map(p => ({
+            cod: String(p.cod || '').trim(),
+            item: String(p.item || '').trim(),
+            unidade: String(p.unidade || 'un').trim(),
+            custo: Number(p.custo) || 0
+          }));
+          localStorage.setItem('pa_products', JSON.stringify(ALL_PRODUCTS));
+          atualizarBadgeCatalogo();
+          statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online (${ALL_PRODUCTS.length} itens)`;
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 text-emerald-400 rounded-full border border-emerald-500/20 text-xs font-semibold";
         } else {
-          statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Nenhum produto retornado';
-          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-600 rounded-full border border-amber-500/20 text-xs font-semibold";
+          statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span> Atualizar implantação do Script`;
+          statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 text-rose-400 rounded-full border border-rose-500/20 text-xs font-semibold";
         }
       };
 
-      const scriptProd = document.createElement('script');
-      scriptProd.src = `${API_URL}?action=getProdutos&callback=receberProdutos`;
-      scriptProd.onerror = function() {
-        statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Erro de Conexão com o Google';
-        statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 text-rose-500 rounded-full border border-rose-500/20 text-xs font-semibold";
+      const s = document.createElement('script');
+      s.src = `${API_URL}?action=getProdutos&callback=receberProdutos&t=${Date.now()}`;
+      s.onerror = function() {
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Modo Local (${ALL_PRODUCTS.length} itens)`;
+        statusEl.className = "flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 text-amber-300 rounded-full border border-amber-500/20 text-xs font-semibold";
       };
-      document.body.appendChild(scriptProd);
-
-      window.receberHistorico = function(hist) {
-        if (Array.isArray(hist) && hist.length > 0) {
-          ALL_SESSIONS = groupHistoryBySession(hist);
-        }
-      };
-
-      const scriptHist = document.createElement('script');
-      scriptHist.src = `${API_URL}?action=getHistorico&callback=receberHistorico`;
-      document.body.appendChild(scriptHist);
+      document.body.appendChild(s);
     }
 
     function switchTab(tab) {
@@ -504,14 +606,16 @@
 
     function filterNameSuggestions(val) {
       const dropdown = document.getElementById('names-dropdown');
-      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
-      const filtered = USER_NAMES.filter(n => n.toLowerCase().includes(val.toLowerCase()));
+      const termo = normalizarTexto(val);
+      const filtered = termo ? USER_NAMES.filter(n => normalizarTexto(n).includes(termo)) : USER_NAMES;
       if (filtered.length > 0) {
         dropdown.innerHTML = filtered.map(name => 
-          `<button type="button" onclick="selectNameSuggestion('${name}')" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-all">${name}</button>`
+          `<button type="button" onclick="selectNameSuggestion('${name.replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-all">${name}</button>`
         ).join('');
         dropdown.classList.remove('hidden');
-      } else { dropdown.classList.add('hidden'); }
+      } else {
+        dropdown.classList.add('hidden');
+      }
     }
 
     function selectNameSuggestion(name) {
@@ -520,14 +624,14 @@
     }
 
     function showNamesDropdown() {
-      const val = document.getElementById('input-quemContou').value;
-      filterNameSuggestions(val || ' ');
+      filterNameSuggestions(document.getElementById('input-quemContou').value);
     }
 
+    // Fecha os dropdowns apenas se clicar fora do container inteiro (input + lista)
     document.addEventListener('click', function(e) {
-      if (!e.target.closest('#input-quemContou')) document.getElementById('names-dropdown').classList.add('hidden');
-      if (!e.target.closest('#input-cod')) document.getElementById('cod-dropdown').classList.add('hidden');
-      if (!e.target.closest('#input-item')) document.getElementById('item-dropdown').classList.add('hidden');
+      if (!e.target.closest('#container-quemContou')) document.getElementById('names-dropdown').classList.add('hidden');
+      if (!e.target.closest('#container-cod')) document.getElementById('cod-dropdown').classList.add('hidden');
+      if (!e.target.closest('#container-item')) document.getElementById('item-dropdown').classList.add('hidden');
     });
 
     function setTipo(tipo) {
@@ -548,22 +652,26 @@
       const quemContou = document.getElementById('input-quemContou').value.trim();
       const local = document.getElementById('select-local').value;
 
-      if (!quemContou || !local) { alert('Preencha os campos obrigatórios!'); return; }
+      if (!quemContou || !local) { alert('Preencha o responsável e o local da contagem!'); return; }
 
       activeSession.quemContou = quemContou;
       activeSession.local = local;
       
-      if (!USER_NAMES.includes(quemContou)) { USER_NAMES.push(quemContou); }
+      if (!USER_NAMES.includes(quemContou)) {
+        USER_NAMES.push(quemContou);
+        localStorage.setItem('pa_user_names', JSON.stringify(USER_NAMES));
+      }
 
       document.getElementById('display-local').innerText = local;
       document.getElementById('display-responsavel').innerText = quemContou;
       document.getElementById('display-tipo').innerText = activeSession.tipo.toUpperCase();
       document.getElementById('display-tipo').className = activeSession.tipo === 'inicial' 
-        ? 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/20 text-blue-600'
-        : 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-600';
+        ? 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/20 text-blue-300'
+        : 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300';
 
       document.getElementById('view-counting-step1').classList.add('hidden');
       document.getElementById('view-counting-step2').classList.remove('hidden');
+      atualizarBadgeCatalogo();
       renderAddedItems();
     }
 
@@ -572,43 +680,61 @@
       document.getElementById('view-counting-step1').classList.remove('hidden');
     }
 
+    // FILTRO INTELIGENTE POR CÓDIGO (Funciona ao clicar ou digitar)
     function filterCodSuggestions(val) {
       const dropdown = document.getElementById('cod-dropdown');
-      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
-      const filtered = ALL_PRODUCTS.filter(p => p.cod.toLowerCase().includes(val.toLowerCase()));
+      const termo = normalizarTexto(val);
+
+      const filtered = ALL_PRODUCTS.filter(p => 
+        !termo || normalizarTexto(p.cod).includes(termo) || normalizarTexto(p.item).includes(termo)
+      ).slice(0, 50);
+
       if (filtered.length > 0) {
-        dropdown.innerHTML = filtered.map(p => 
-          `<button type="button" onclick="selectProduct('${p.cod}')" class="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex justify-between transition-all">
-            <span class="font-bold text-slate-800">${p.cod}</span>
-            <span class="text-slate-400 truncate max-w-[120px]">${p.item}</span>
-          </button>`
-        ).join('');
+        dropdown.innerHTML = filtered.map(p => {
+          const safeCod = String(p.cod).replace(/'/g, "\\'");
+          return `<button type="button" onclick="selectProduct('${safeCod}')" class="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 flex items-center justify-between gap-2 transition-all">
+            <span class="font-bold text-blue-700">${p.cod}</span>
+            <span class="text-slate-600 truncate text-right flex-1">${p.item}</span>
+          </button>`;
+        }).join('');
         dropdown.classList.remove('hidden');
-      } else { dropdown.classList.add('hidden'); }
+      } else {
+        dropdown.innerHTML = `<div class="px-3 py-2.5 text-slate-400 text-center">Nenhum código encontrado</div>`;
+        dropdown.classList.remove('hidden');
+      }
     }
 
+    // FILTRO INTELIGENTE POR NOME DO ITEM (Ignora acentos e maiúsculas)
     function filterItemSuggestions(val) {
       const dropdown = document.getElementById('item-dropdown');
-      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
-      const filtered = ALL_PRODUCTS.filter(p => p.item.toLowerCase().includes(val.toLowerCase()));
+      const termo = normalizarTexto(val);
+
+      const filtered = ALL_PRODUCTS.filter(p => 
+        !termo || normalizarTexto(p.item).includes(termo) || normalizarTexto(p.cod).includes(termo)
+      ).slice(0, 50);
+
       if (filtered.length > 0) {
-        dropdown.innerHTML = filtered.map(p => 
-          `<button type="button" onclick="selectProduct('${p.cod}')" class="w-full text-left px-3 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex justify-between transition-all">
+        dropdown.innerHTML = filtered.map(p => {
+          const safeCod = String(p.cod).replace(/'/g, "\\'");
+          return `<button type="button" onclick="selectProduct('${safeCod}')" class="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-slate-100 last:border-0 flex items-center justify-between gap-2 transition-all">
             <span class="font-semibold text-slate-800">${p.item}</span>
-            <span class="text-slate-400 font-mono text-[10px]">${p.cod}</span>
-          </button>`
-        ).join('');
+            <span class="text-slate-400 font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">${p.cod}</span>
+          </button>`;
+        }).join('');
         dropdown.classList.remove('hidden');
-      } else { dropdown.classList.add('hidden'); }
+      } else {
+        dropdown.innerHTML = `<div class="px-3 py-2.5 text-slate-400 text-center">Nenhum produto encontrado</div>`;
+        dropdown.classList.remove('hidden');
+      }
     }
 
     function selectProduct(cod) {
-      const prod = ALL_PRODUCTS.find(p => p.cod === cod);
+      const prod = ALL_PRODUCTS.find(p => String(p.cod).trim() === String(cod).trim());
       if (prod) {
         document.getElementById('input-cod').value = prod.cod;
         document.getElementById('input-item').value = prod.item;
-        document.getElementById('display-unidade').innerText = prod.unidade;
-        document.getElementById('display-custo').innerText = 'R$ ' + Number(prod.custo).toFixed(2);
+        document.getElementById('display-unidade').innerText = prod.unidade || 'un';
+        document.getElementById('display-custo').innerText = 'R$ ' + (Number(prod.custo) || 0).toFixed(2);
         
         document.getElementById('cod-dropdown').classList.add('hidden');
         document.getElementById('item-dropdown').classList.add('hidden');
@@ -625,24 +751,39 @@
 
     function handleAddItem(e) {
       e.preventDefault();
-      const cod = document.getElementById('input-cod').value;
-      const item = document.getElementById('input-item').value;
-      const qtyStr = document.getElementById('input-quantidade').value;
+      let cod = document.getElementById('input-cod').value.trim();
+      let item = document.getElementById('input-item').value.trim();
+      const qtyStr = document.getElementById('input-quantidade').value.trim();
 
-      if (!cod || !item || !qtyStr) { alert('Preencha os campos corretamente.'); return; }
+      // Se o usuário digitou o nome ou código mas não clicou na sugestão, tenta achar correspondência
+      let originalProd = ALL_PRODUCTS.find(p => 
+        normalizarTexto(p.cod) === normalizarTexto(cod) || 
+        (item && normalizarTexto(p.item) === normalizarTexto(item))
+      );
+
+      if (originalProd) {
+        cod = originalProd.cod;
+        item = originalProd.item;
+      }
+
+      if (!cod || !item || !qtyStr) { alert('Selecione um produto da lista e informe a quantidade.'); return; }
       const qty = parseFloat(qtyStr.replace(',', '.')) || 0;
-      if (qty <= 0) { alert('Insira um valor maior que zero.'); return; }
+      if (qty <= 0) { alert('Insira uma quantidade maior que zero.'); return; }
 
-      const originalProd = ALL_PRODUCTS.find(p => p.cod === cod) || { custo: 0, unidade: 'un' };
+      const prodInfo = originalProd || { custo: 0, unidade: 'un' };
       const existingIdx = activeSession.itens.findIndex(i => i.cod === cod);
 
       if (existingIdx !== -1) {
-        if (confirm('Item já existente. Deseja somar as quantidades?')) {
+        if (confirm('Item já incluído nesta contagem. Deseja somar a quantidade?')) {
           activeSession.itens[existingIdx].quantidade += qty;
         }
       } else {
         activeSession.itens.push({
-          cod: cod, item: item, unidade: originalProd.unidade, custo: Number(originalProd.custo) || 0, quantidade: qty
+          cod: cod,
+          item: item,
+          unidade: prodInfo.unidade || 'un',
+          custo: Number(prodInfo.custo) || 0,
+          quantidade: qty
         });
       }
 
@@ -652,6 +793,7 @@
       document.getElementById('display-custo').innerText = '-';
       document.getElementById('input-quantidade').value = '';
       renderAddedItems();
+      document.getElementById('input-item').focus();
     }
 
     function renderAddedItems() {
@@ -675,7 +817,7 @@
           <td class="px-6 py-3 text-right font-bold text-slate-900 font-mono">${item.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
           <td class="px-6 py-3 text-right text-slate-500 font-mono">R$ ${item.custo.toFixed(2)}</td>
           <td class="px-6 py-3 text-right font-semibold text-slate-800 font-mono">R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-          <td class="px-6 py-3 text-center">
+          <td class="px-6 py-3 text-center whitespace-nowrap">
             <button onclick="editAddedItem(${idx})" class="text-blue-600 hover:underline mr-3 font-medium transition-all">Editar</button>
             <button onclick="deleteAddedItem(${idx})" class="text-rose-600 hover:underline font-medium transition-all">Apagar</button>
           </td>
@@ -704,7 +846,7 @@
     }
 
     function finalizeCountToPDV() {
-      if (activeSession.itens.length === 0) { alert('A lista está vazia!'); return; }
+      if (activeSession.itens.length === 0) { alert('Adicione pelo menos um item antes de finalizar!'); return; }
       activeSession.data = new Date().toISOString().split('.')[0];
 
       document.getElementById('ticket-data').innerText = formatDateTime(activeSession.data);
@@ -756,7 +898,6 @@
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
         
@@ -767,14 +908,15 @@
           btn.className = 'w-full py-3.5 px-4 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-semibold cursor-not-allowed';
           const statusBox = document.getElementById('save-status-box');
           statusBox.classList.remove('hidden');
-          document.getElementById('save-status-msg').innerText = "Processado via API com sucesso na folha de cálculo vinculada!";
+          document.getElementById('save-status-msg').innerText = resJson.message || "Contagem gravada com sucesso na planilha!";
           
           ALL_SESSIONS.push(JSON.parse(JSON.stringify(activeSession)));
+          localStorage.setItem('pa_sessions', JSON.stringify(ALL_SESSIONS));
         } else {
           throw new Error(resJson.message);
         }
       } catch (err) {
-        alert('Falha de comunicação com o servidor: ' + err);
+        alert('Falha ao gravar no Google Sheets: ' + err);
         btn.disabled = false;
         btn.innerText = 'Tentar Novamente';
       }
